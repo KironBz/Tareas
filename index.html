@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tareas - Gestor de Tareas por Materias</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header con navegación -->
+    <header class="header">
+      <div class="header-content">
+        <h1>Tareas</h1>
+        <nav class="nav">
+          <button id="nav-dashboard" class="nav-btn active">
+            <span class="icon">📚</span> Materias
+          </button>
+          <button id="nav-alltasks" class="nav-btn">
+            <span class="icon">📋</span> Todas las Tareas
+          </button>
+          <button id="nav-settings" class="nav-btn">
+            <span class="icon">⚙️</span> Configuración
+          </button>
+        </nav>
+      </div>
+      <div class="sync-status">
+        <span id="sync-indicator" class="sync-dot offline"></span>
+        <span id="sync-text">Offline</span>
+      </div>
+    </header>
+
+    <!-- VISTA 1: Dashboard de Materias -->
+    <section id="dashboard-view" class="view active">
+      <div class="view-header">
+        <h2>Mis Materias</h2>
+        <button id="btn-new-subject" class="btn btn-primary">+ Nueva Materia</button>
+      </div>
+      <div id="subjects-grid" class="subjects-grid">
+        <!-- Generado dinámicamente -->
+      </div>
+    </section>
+
+    <!-- VISTA 2: Lista de Tareas de Materia -->
+    <section id="subject-tasks-view" class="view">
+      <div class="view-header">
+        <button id="btn-back-to-dashboard" class="btn btn-secondary">← Atrás</button>
+        <h2 id="subject-title"></h2>
+        <button id="btn-new-task-subject" class="btn btn-primary">+ Nueva Tarea</button>
+      </div>
+      <div id="subject-tasks-list" class="tasks-list">
+        <!-- Generado dinámicamente -->
+      </div>
+    </section>
+
+    <!-- VISTA 3: Lista Global de Tareas -->
+    <section id="alltasks-view" class="view">
+      <div class="view-header">
+        <h2>Todas las Tareas</h2>
+        <div class="filter-controls">
+          <select id="filter-importance" class="filter-select">
+            <option value="">Todas las prioridades</option>
+            <option value="1">Baja prioridad</option>
+            <option value="2">Prioridad Media</option>
+            <option value="3">Prioridad Alta</option>
+          </select>
+        </div>
+      </div>
+      <div id="alltasks-list" class="tasks-list">
+        <!-- Generado dinámicamente -->
+      </div>
+    </section>
+
+    <!-- VISTA 4: Configuración -->
+    <section id="settings-view" class="view">
+      <div class="view-header">
+        <h2>Configuración</h2>
+      </div>
+      <div class="settings-container">
+        <div class="setting-group">
+          <h3>Sincronización con GitHub Gist</h3>
+          <p class="setting-description">
+            Crea un token personal en <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings</a> 
+            con permisos de acceso a Gists.
+          </p>
+          
+          <div class="input-group">
+            <label for="gist-token">Token Personal de GitHub</label>
+            <input 
+              type="password" 
+              id="gist-token" 
+              placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+              class="input-field"
+            >
+            <small>Se guarda localmente, nunca se envía a servidores terceros</small>
+          </div>
+
+          <div class="input-group">
+            <label for="gist-id">ID del Gist (Opcional)</label>
+            <input 
+              type="text" 
+              id="gist-id" 
+              placeholder="Dejar en blanco para crear uno nuevo"
+              class="input-field"
+            >
+            <small>Si dejas en blanco, se creará un nuevo Gist automáticamente</small>
+          </div>
+
+          <div class="button-group">
+            <button id="btn-save-config" class="btn btn-primary">Guardar Configuración</button>
+            <button id="btn-sync-now" class="btn btn-secondary">Sincronizar Ahora</button>
+          </div>
+
+          <div id="config-message" class="message"></div>
+        </div>
+
+        <div class="setting-group">
+          <h3>Datos Locales</h3>
+          <p class="setting-description">Gestiona tu información guardada localmente</p>
+          <button id="btn-export-data" class="btn btn-secondary">Descargar Backup</button>
+          <button id="btn-import-data" class="btn btn-secondary">Importar Backup</button>
+          <button id="btn-clear-data" class="btn btn-danger">Limpiar Todo (⚠️)</button>
+          <input type="file" id="file-import" accept=".json" style="display: none;">
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- MODAL: Crear/Editar Tarea -->
+  <div id="task-modal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close">&times;</button>
+      <h2 id="modal-title">Nueva Tarea</h2>
+      
+      <form id="task-form" class="form">
+        <div class="form-group">
+          <label for="task-subject">Materia</label>
+          <select id="task-subject" class="input-field">
+            <option value="">Selecciona una materia</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="task-title">Título de la Tarea</label>
+          <input 
+            type="text" 
+            id="task-title" 
+            class="input-field" 
+            placeholder="Ej: Proyecto Final de Matemáticas"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="task-description">Descripción (opcional)</label>
+          <textarea 
+            id="task-description" 
+            class="input-field textarea"
+            placeholder="Detalles de la tarea..."
+            rows="4"
+          ></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="task-duedate">Fecha de Entrega</label>
+            <input 
+              type="date" 
+              id="task-duedate" 
+              class="input-field"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="task-importance">Prioridad</label>
+            <select id="task-importance" class="input-field">
+              <option value="1">🟢 Baja (1)</option>
+              <option value="2">🟡 Media (2)</option>
+              <option value="3">🔴 Alta (3)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Guardar Tarea</button>
+          <button type="button" id="btn-cancel-task" class="btn btn-secondary">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Crear/Editar Materia -->
+  <div id="subject-modal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close">&times;</button>
+      <h2 id="subject-modal-title">Nueva Materia</h2>
+      
+      <form id="subject-form" class="form">
+        <div class="form-group">
+          <label for="subject-name">Nombre de la Materia</label>
+          <input 
+            type="text" 
+            id="subject-name" 
+            class="input-field" 
+            placeholder="Ej: Cálculo III"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="subject-color">Color (opcional)</label>
+          <input 
+            type="color" 
+            id="subject-color" 
+            class="input-field"
+            value="#6366f1"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="subject-teacher">Profesor (opcional)</label>
+          <input 
+            type="text" 
+            id="subject-teacher" 
+            class="input-field" 
+            placeholder="Nombre del profesor"
+          >
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Guardar Materia</button>
+          <button type="button" id="btn-cancel-subject" class="btn btn-secondary">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
