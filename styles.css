@@ -202,7 +202,7 @@ body {
 }
 
 .subject-card {
-  background: linear-gradient(135deg, var(--purple-dark) 0%, var(--blue-dark) 100%);
+  background: linear-gradient(135deg, var(--card-color, #6d28d9) 0%, color-mix(in srgb, var(--card-color, #6d28d9) 70%, black) 100%);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   cursor: pointer;
